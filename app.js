@@ -55,7 +55,7 @@ app.post("/wedding-wishes", upload.array('images', 10), async (req, res, next) =
               },
               requestBody: {
                   name: wishesFilename,
-                  parents: ["1T8vXWEl7RcpzoWTboX3MkNgYwzv1h9BT"]
+                  parents: [process.env.FOLDER_ID]
               },
               fields: "id"
           }).then(() => {fs.unlinkSync(wishesFilename) })
@@ -63,7 +63,6 @@ app.post("/wedding-wishes", upload.array('images', 10), async (req, res, next) =
 
 
     for (const file of req.files) {
-        console.log(file)
       google.drive({ version: "v3", auth: auth }).files
       .create({
           media: {
@@ -72,7 +71,7 @@ app.post("/wedding-wishes", upload.array('images', 10), async (req, res, next) =
           },
           requestBody: {
               name: file.filename,
-              parents: ["1T8vXWEl7RcpzoWTboX3MkNgYwzv1h9BT"]
+              parents: [process.env.FOLDER_ID]
           },
           fields: "id"
       }).then(() => { 
