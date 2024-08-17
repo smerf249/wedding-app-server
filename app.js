@@ -34,14 +34,23 @@ app.listen(3000, () => {
  console.log("Server running on port 3000");
 });
 
-app.post("/wedding-wishes", upload.array('images', 10), async (req, res, next) => {
-    const fileSize = req.files.map(file => file.size)
-    if(req.files.length > 10 || fileSize.find(filesize => fileSize > 10000000)) {
+app.get("/refresh", async (_, res) => {
+    console.log("Refresh on " + new Date())
+    res.status(200);
+    res.send({
+        message: 'OK',
+      });
+})
+
+app.post("/wedding-wishes", upload.array('images', 10), async (req, res) => {
+    const fileSizeList = req.files.map(file => file.size)
+    if(req.files.length > 10 || fileSizeList.find(filesize => filesize > 10000000)) {
         throw new Error('File error')
     }
 
+    const wishesFilename = randomUUID() + ".txt"
+
     if(req.body.wishes && req.body.user) {
-        const wishesFilename = randomUUID() + ".txt"
         var writeStream = await fs.createWriteStream(wishesFilename);
         await writeStream.write("Zyczenia: " + req.body.wishes);
         await writeStream.write("\nZyczy: " + req.body.user);
@@ -61,8 +70,10 @@ app.post("/wedding-wishes", upload.array('images', 10), async (req, res, next) =
           }).then(() => {fs.unlinkSync(wishesFilename) })
     }
 
+    const authorIdentifierSuffix = wishesFilename.split('-')[0]
 
     for (const file of req.files) {
+        const filename = authorIdentifierSuffix + '-' + file.filename
       google.drive({ version: "v3", auth: auth }).files
       .create({
           media: {
@@ -70,7 +81,7 @@ app.post("/wedding-wishes", upload.array('images', 10), async (req, res, next) =
               body: fs.createReadStream(file.path)
           },
           requestBody: {
-              name: file.filename,
+              name: filename,
               parents: [process.env.FOLDER_ID]
           },
           fields: "id"
